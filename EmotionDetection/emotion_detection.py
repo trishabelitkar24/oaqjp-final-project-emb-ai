@@ -1,10 +1,9 @@
+```python
 import requests
+import json
+
 
 def emotion_detector(text_to_analyze):
-    """
-    Detect emotions using the Watson NLP Emotion Predict function.
-    """
-
     url = 'https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict'
 
     headers = {
@@ -19,19 +18,49 @@ def emotion_detector(text_to_analyze):
 
     response = requests.post(url, json=input_json, headers=headers)
 
-    return response.text
+    if response.status_code == 200:
+        result = response.json()
+        emotions = result['emotionPredictions'][0]['emotion']
 
-import json
+        dominant_emotion = max(emotions, key=emotions.get)
+
+        return {
+            'anger': emotions['anger'],
+            'disgust': emotions['disgust'],
+            'fear': emotions['fear'],
+            'joy': emotions['joy'],
+            'sadness': emotions['sadness'],
+            'dominant_emotion': dominant_emotion
+        }
+
+    return {
+        'anger': None,
+        'disgust': None,
+        'fear': None,
+        'joy': None,
+        'sadness': None,
+        'dominant_emotion': None
+    }
+
 
 def emotion_predictor(response_text):
-    """
-    Extract emotion scores and identify the dominant emotion.
-    """
-    result = json.loads(response_text)
-    emotions = result['emotionPredictions'][0]['emotion']
+    if isinstance(response_text, str):
+        result = json.loads(response_text)
+        emotions = result['emotionPredictions'][0]['emotion']
+    else:
+        emotions = response_text
 
-    dominant_emotion = max(emotions, key=emotions.get)
+    dominant_emotion = max(
+        ['anger', 'disgust', 'fear', 'joy', 'sadness'],
+        key=lambda emotion: emotions[emotion]
+    )
 
-    emotions['dominant_emotion'] = dominant_emotion
-
-    return emotions
+    return {
+        'anger': emotions['anger'],
+        'disgust': emotions['disgust'],
+        'fear': emotions['fear'],
+        'joy': emotions['joy'],
+        'sadness': emotions['sadness'],
+        'dominant_emotion': dominant_emotion
+    }
+```
