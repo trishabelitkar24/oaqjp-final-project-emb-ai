@@ -1,0 +1,80 @@
+
+import requests
+import json
+
+def emotion_detector(text_to_analyze):
+    """
+    Detect emotions and return emotion scores with dominant emotion.
+    Handles HTTP 400 errors.
+    """
+
+    url = 'https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict'
+
+    headers = {
+        "grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"
+    }
+
+    input_json = {
+        "raw_document": {
+            "text": text_to_analyze
+        }
+    }
+
+    response = requests.post(url, json=input_json, headers=headers)
+
+    # Handle invalid input
+    if response.status_code == 400:
+        return None
+
+    if response.status_code == 200:
+        result = response.json()
+        emotions = result['emotionPredictions'][0]['emotion']
+
+        dominant_emotion = max(emotions, key=emotions.get)
+
+        return {
+            'anger': emotions['anger'],
+            'disgust': emotions['disgust'],
+            'fear': emotions['fear'],
+            'joy': emotions['joy'],
+            'sadness': emotions['sadness'],
+            'dominant_emotion': dominant_emotion
+        }
+
+    return None
+
+
+def emotion_predictor(response_text):
+    """
+    Identify the dominant emotion from the response.
+    """
+
+    if response_text is None:
+        return {
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
+        }
+
+    if isinstance(response_text, str):
+        result = json.loads(response_text)
+        emotions = result['emotionPredictions'][0]['emotion']
+    else:
+        emotions = response_text
+
+    dominant_emotion = max(
+        ['anger', 'disgust', 'fear', 'joy', 'sadness'],
+        key=lambda emotion: emotions[emotion]
+    )
+
+    return {
+        'anger': emotions['anger'],
+        'disgust': emotions['disgust'],
+        'fear': emotions['fear'],
+        'joy': emotions['joy'],
+        'sadness': emotions['sadness'],
+        'dominant_emotion': dominant_emotion
+    }
